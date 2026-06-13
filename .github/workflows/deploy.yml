@@ -1,0 +1,45 @@
+name: Kubernetes Deployment CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Build Docker Image
+        run: |
+          docker build -t venky2705/lead-management-k8s:v1 .
+
+      - name: Push Docker Image
+        run: |
+          docker push venky2705/lead-management-k8s:v1
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker pull venky2705/lead-management-k8s:v1
+
+            docker stop lead-management || true
+            docker rm lead-management || true
+
+            docker run -d \
+              --name lead-management \
+              -p 8000:8000 \
+              venky2705/lead-management-k8s:v1

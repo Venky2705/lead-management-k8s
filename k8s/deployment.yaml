@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: lead-management-k8s
+
+spec:
+  replicas: 2
+
+  selector:
+    matchLabels:
+      app: lead-management-k8s
+
+  template:
+    metadata:
+      labels:
+        app: lead-management-k8s
+
+    spec:
+      containers:
+        - name: lead-management-k8s
+          image: venky2705/lead-management-k8s:v1
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
