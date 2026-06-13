@@ -6,12 +6,18 @@ on:
       - main
 
 jobs:
+
   deploy:
+
     runs-on: ubuntu-latest
 
     steps:
+
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Set Up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
       - name: Docker Login
         uses: docker/login-action@v3
@@ -19,27 +25,30 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
 
-      - name: Build Docker Image
+      - name: Build And Push Docker Image
         run: |
-          docker build -t venky2705/lead-management-k8s:v1 .
+          docker buildx build \
+            --platform linux/amd64 \
+            --push \
+            -t venky2705/lead-management-k8s:latest \
+            .
 
-      - name: Push Docker Image
-        run: |
-          docker push venky2705/lead-management-k8s:v1
-
-      - name: Deploy to EC2
+      - name: Deploy To EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+
           script: |
-            docker pull venky2705/lead-management-k8s:v1
+
+            docker pull venky2705/lead-management-k8s:latest
 
             docker stop lead-management || true
+
             docker rm lead-management || true
 
             docker run -d \
               --name lead-management \
               -p 8000:8000 \
-              venky2705/lead-management-k8s:v1
+              venky2705/lead-management-k8s:latest
