@@ -6,7 +6,7 @@ app = FastAPI()
 @app.get("/")
 def root():
     return {
-        "message": "Lead Management Kubernetes API"
+        "message": "Lead Management API Version 2"
     }
 
 
